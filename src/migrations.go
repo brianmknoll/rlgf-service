@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 
@@ -28,22 +27,17 @@ var migrations = []Migration{
 	},
 }
 
-func RunMigrations() {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
-	svc := dynamodb.New(sess)
-
+func (s *RlgfServer) runMigrations() {
 	describeInput := &dynamodb.DescribeTableInput{
 		TableName: aws.String(migrationsTable),
 	}
 
-	_, err := svc.DescribeTable(describeInput)
+	_, err := s.svc.DescribeTable(describeInput)
 	if err != nil {
-		createMigrationsTable(svc)
+		createMigrationsTable(s.svc)
 	}
 
-	migrationIds, err := getMigrationIdsAlreadyRan(svc)
+	migrationIds, err := getMigrationIdsAlreadyRan(s.svc)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to get migration IDs: %v", err))
 	}
@@ -51,9 +45,9 @@ func RunMigrations() {
 	for _, migration := range migrations {
 		if !slices.Contains(migrationIds, migration.migrationId) {
 			fmt.Printf("Running migration: %s\n", migration.migrationId)
-			migration.job(svc)
+			migration.job(s.svc)
 
-			err := markMigrationAsRan(svc, migration.migrationId)
+			err := markMigrationAsRan(s.svc, migration.migrationId)
 			if err != nil {
 				panic(fmt.Sprintf("Failed to mark migration as ran: %v", err))
 			}
