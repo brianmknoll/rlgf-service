@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/brianmknoll/rlgf-service/internal/db"
+	"github.com/brianmknoll/rlgf-service/internal/discord"
 )
 
 type ApiEvent struct {
@@ -16,6 +17,7 @@ type ApiEvent struct {
 }
 
 func main() {
+	discord := discord.NewDiscordClient()
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
@@ -39,11 +41,19 @@ func main() {
 		}
 		defer r.Body.Close()
 
+		// Write to the database.
 		err = db.CreateEvent(e.Name)
 		if err != nil {
 			http.Error(w, "Internal server error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		// Create the Discord event.
+		discord.CreateDiscordEvent(e.Name)
+
+		// TODO:
+		// 1. Consider a DB rollback if the Discord request fails.
+		// 2. Make Discord event optional.
 
 		fmt.Printf("Received: Name=%s\n", e.Name)
 		w.WriteHeader(http.StatusCreated)
