@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
@@ -27,17 +27,17 @@ var migrations = []Migration{
 	},
 }
 
-func (s *RlgfServer) runMigrations() {
+func (db *DynamoDatabase) RunMigrations() {
 	describeInput := &dynamodb.DescribeTableInput{
 		TableName: aws.String(migrationsTable),
 	}
 
-	_, err := s.svc.DescribeTable(describeInput)
+	_, err := db.dyn.DescribeTable(describeInput)
 	if err != nil {
-		createMigrationsTable(s.svc)
+		createMigrationsTable(db.dyn)
 	}
 
-	migrationIds, err := getMigrationIdsAlreadyRan(s.svc)
+	migrationIds, err := getMigrationIdsAlreadyRan(db.dyn)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to get migration IDs: %v", err))
 	}
@@ -45,9 +45,9 @@ func (s *RlgfServer) runMigrations() {
 	for _, migration := range migrations {
 		if !slices.Contains(migrationIds, migration.migrationId) {
 			fmt.Printf("Running migration: %s\n", migration.migrationId)
-			migration.job(s.svc)
+			migration.job(db.dyn)
 
-			err := markMigrationAsRan(s.svc, migration.migrationId)
+			err := markMigrationAsRan(db.dyn, migration.migrationId)
 			if err != nil {
 				panic(fmt.Sprintf("Failed to mark migration as ran: %v", err))
 			}
@@ -57,7 +57,7 @@ func (s *RlgfServer) runMigrations() {
 	}
 }
 
-func markMigrationAsRan(svc *dynamodb.DynamoDB, migrationId string) error {
+func markMigrationAsRan(dyn *dynamodb.DynamoDB, migrationId string) error {
 	input := &dynamodb.PutItemInput{
 		TableName: aws.String(migrationsTable),
 		Item: map[string]*dynamodb.AttributeValue{
@@ -67,7 +67,7 @@ func markMigrationAsRan(svc *dynamodb.DynamoDB, migrationId string) error {
 		},
 	}
 
-	_, err := svc.PutItem(input)
+	_, err := dyn.PutItem(input)
 	if err != nil {
 		return fmt.Errorf("failed to mark migration as ran: %w", err)
 	}
@@ -76,7 +76,7 @@ func markMigrationAsRan(svc *dynamodb.DynamoDB, migrationId string) error {
 	return nil
 }
 
-func getMigrationIdsAlreadyRan(svc *dynamodb.DynamoDB) ([]string, error) {
+func getMigrationIdsAlreadyRan(dyn *dynamodb.DynamoDB) ([]string, error) {
 	var allMatchingItems []map[string]*dynamodb.AttributeValue
 
 	var lastEvaluatedKey map[string]*dynamodb.AttributeValue
@@ -94,7 +94,7 @@ func getMigrationIdsAlreadyRan(svc *dynamodb.DynamoDB) ([]string, error) {
 			ExclusiveStartKey:    lastEvaluatedKey,
 		}
 
-		output, err := svc.Scan(scanInput)
+		output, err := dyn.Scan(scanInput)
 		if err != nil {
 			panic(fmt.Sprintf("Scan failed: %v", err))
 		}
@@ -103,10 +103,9 @@ func getMigrationIdsAlreadyRan(svc *dynamodb.DynamoDB) ([]string, error) {
 			allMatchingItems = append(allMatchingItems, output.Items...)
 		}
 
-		// Check if there are more pages
 		lastEvaluatedKey = output.LastEvaluatedKey
 		if lastEvaluatedKey == nil {
-			break // No more pages, scan is complete
+			break
 		}
 	}
 
@@ -135,7 +134,7 @@ func unmarshalMigrationIds(rows []map[string]*dynamodb.AttributeValue) ([]string
 	return migrationIds, nil
 }
 
-func createMigrationsTable(svc *dynamodb.DynamoDB) {
+func createMigrationsTable(dyn *dynamodb.DynamoDB) {
 	input := &dynamodb.CreateTableInput{
 		TableName: aws.String(migrationsTable),
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
@@ -153,7 +152,7 @@ func createMigrationsTable(svc *dynamodb.DynamoDB) {
 		BillingMode: aws.String(dynamodb.BillingModePayPerRequest),
 	}
 
-	_, err := svc.CreateTable(input)
+	_, err := dyn.CreateTable(input)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create table: %v", err))
 	}
@@ -161,7 +160,7 @@ func createMigrationsTable(svc *dynamodb.DynamoDB) {
 	fmt.Println("migrations table created successfully")
 }
 
-func createEventTable(svc *dynamodb.DynamoDB) {
+func createEventTable(dyn *dynamodb.DynamoDB) {
 	input := &dynamodb.CreateTableInput{
 		TableName: aws.String("events"),
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
@@ -179,7 +178,7 @@ func createEventTable(svc *dynamodb.DynamoDB) {
 		BillingMode: aws.String(dynamodb.BillingModePayPerRequest),
 	}
 
-	_, err := svc.CreateTable(input)
+	_, err := dyn.CreateTable(input)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create table: %v", err))
 	}
