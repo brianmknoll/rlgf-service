@@ -1,10 +1,11 @@
 package db
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/google/uuid"
 )
@@ -28,7 +29,7 @@ func (d *DynamoDatabase) CreateEvent(name string) error {
 		TableName: aws.String("events"),
 	}
 
-	_, err = d.dyn.PutItem(input)
+	_, err = d.dyn.PutItem(context.TODO(), input)
 	if err != nil {
 		return err
 	}

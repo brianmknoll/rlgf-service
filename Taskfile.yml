@@ -1,0 +1,25 @@
+version: '3'
+
+dotenv: ['.env']
+
+tasks:
+  up:
+    run: once
+    preconditions:
+      - test -f docker-compose.yml
+    cmds:
+      - docker compose up -d
+  
+  down:
+    preconditions:
+      - test -f docker-compose.yml
+    cmds:
+      - docker compose down
+    
+  test:
+    deps: [up]
+    sources:
+      - src/**/*.go
+    cmds:
+      - cd src && go test ./...
+      - task: down
