@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/brianmknoll/rlgf-service/internal/db"
-	"github.com/brianmknoll/rlgf-service/internal/discord"
 )
 
 type ApiEvent struct {
@@ -17,7 +16,6 @@ type ApiEvent struct {
 }
 
 func main() {
-	discord := discord.NewDiscordClient()
 	db := db.NewFirestoreDatabase()
 
 	mux := http.NewServeMux()
@@ -45,7 +43,8 @@ func main() {
 		}
 
 		// Create the Discord event.
-		discord.CreateDiscordEvent(e.Name)
+		// Commented out for now. We should do this off of a Firestore write event instead.
+		// discord.CreateDiscordEvent(e.Name)
 
 		// TODO:
 		// 1. Consider a DB rollback if the Discord request fails.
