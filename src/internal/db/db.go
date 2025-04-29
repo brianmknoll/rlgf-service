@@ -2,27 +2,26 @@ package db
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"cloud.google.com/go/firestore"
 )
 
+const projectId = "real-life-group-finder"
+
 type Database interface {
-	CreateEvent(name string) error
+	CreateEvent(guildId, name string) error
 }
 
-type DynamoDatabase struct {
-	dyn *dynamodb.Client
+type FirestoreDatabase struct {
+	client *firestore.Client
 }
 
-func NewDynamoDatabase(s *session.Session) Database {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+func NewFirestoreDatabase() Database {
+	ctx := context.Background()
+	client, err := firestore.NewClient(ctx, projectId)
 	if err != nil {
-		panic("unable to load SDK config, " + err.Error())
+		panic(fmt.Sprintf("Failed to create Firestore client: " + err.Error()))
 	}
-	dyn := dynamodb.NewFromConfig(cfg)
-	return &DynamoDatabase{
-		dyn: dyn,
-	}
+	return &FirestoreDatabase{client: client}
 }

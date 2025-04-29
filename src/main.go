@@ -7,22 +7,18 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/brianmknoll/rlgf-service/internal/db"
 	"github.com/brianmknoll/rlgf-service/internal/discord"
 )
 
 type ApiEvent struct {
-	Name string `json:"name"`
+	GuildId string `json:"guildId"`
+	Name    string `json:"name"`
 }
 
 func main() {
 	discord := discord.NewDiscordClient()
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
-	db := db.NewDynamoDatabase(sess)
-	db.RunMigrations()
+	db := db.NewFirestoreDatabase()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/events", func(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +38,7 @@ func main() {
 		defer r.Body.Close()
 
 		// Write to the database.
-		err = db.CreateEvent(e.Name)
+		err = db.CreateEvent(e.GuildId, e.Name)
 		if err != nil {
 			http.Error(w, "Internal server error: "+err.Error(), http.StatusInternalServerError)
 			return
