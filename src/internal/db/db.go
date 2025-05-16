@@ -11,6 +11,8 @@ const projectId = "real-life-group-finder"
 
 type Database interface {
 	CreateEvent(guildId, name string) error
+	CreateMessage(guildId, channelId string, message DbMessage) error
+	ReadRecentMessages(guildId, channelId string) ([]DbMessage, error)
 }
 
 type FirestoreDatabase struct {

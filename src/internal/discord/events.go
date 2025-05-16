@@ -1,16 +1,17 @@
 package discord
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-func (d *DiscordClient) CreateDiscordEvent(name string) error {
+func (d *DiscordClient) CreateDiscordEvent(guildId, name string) error {
 	start, end := makeFakeTimes()
 	params := &discordgo.GuildScheduledEventParams{
 		Name:               name,
-		Description:        "Test event",
+		Description:        "",
 		ScheduledStartTime: &start,
 		ScheduledEndTime:   &end,
 		// I think the only supported value is 2...
@@ -23,10 +24,13 @@ func (d *DiscordClient) CreateDiscordEvent(name string) error {
 		// https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-field-requirements-by-entity-type
 		EntityType: 3, // External
 	}
-	_, err := d.sess.GuildScheduledEventCreate("test-guild-id", params)
+	fmt.Printf("Creating event with params: %v\n", params)
+	_, err := d.sess.GuildScheduledEventCreate(guildId, params)
 	if err != nil {
+		fmt.Printf("Failed to create event: %v\n", err)
 		return err
 	}
+	fmt.Printf("Created event with name: %s\n", name)
 	return nil
 }
 

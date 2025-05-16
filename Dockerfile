@@ -1,17 +1,12 @@
-FROM golang:1.23.7 AS builder
+FROM golang:1.24.2 AS builder
+WORKDIR /build
+COPY ./src ./
+RUN go mod download
+RUN CGO_ENABLED=0 go build -o ./main
 
+FROM scratch
 WORKDIR /app
-
-COPY ./src .
-RUN go mod download && go mod tidy
-RUN go build -o main .
-
-FROM ubuntu
-
-WORKDIR /app
-
-COPY --chmod=0755 --from=builder /app/main .
-
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /build/main ./main
 EXPOSE 8888
-
-CMD ["./main"]
+ENTRYPOINT ["./main"]
