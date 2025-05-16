@@ -43,7 +43,7 @@ func (f *FirestoreDatabase) ReadRecentMessages(guildId, channelId string) ([]DbM
 		Doc(channelId).
 		Collection("messages")
 
-	query := messagesCollection.Where("timestamp", ">", recent).OrderBy("timestamp", firestore.Asc)
+	query := messagesCollection.Where("Timestamp", ">", recent).OrderBy("Timestamp", firestore.Asc)
 
 	iter := query.Documents(ctx)
 	defer iter.Stop()
