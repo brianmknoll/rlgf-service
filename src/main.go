@@ -14,8 +14,9 @@ import (
 )
 
 type ApiMessage struct {
-	Channel string `json:"channel"`
+	Author  string `json:"author`
 	GuildId string `json:"guildId"`
+	Channel string `json:"channel"`
 	Message string `json:"message"`
 	Epoch   int64  `json:"timestamp"`
 }
@@ -52,6 +53,7 @@ func main() {
 		nanos := (m.Epoch % 1000) * int64(time.Millisecond)
 
 		newMsg := db.DbMessage{
+			Author:    m.Author,
 			Message:   m.Message,
 			Timestamp: time.Unix(seconds, nanos),
 		}

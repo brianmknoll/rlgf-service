@@ -10,6 +10,7 @@ import (
 )
 
 type DbMessage struct {
+	Author    string    `json:"author"`
 	Message   string    `json:"message"`
 	Timestamp time.Time `json:"timestamp"`
 }
