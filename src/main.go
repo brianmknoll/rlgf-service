@@ -13,8 +13,13 @@ import (
 	"github.com/brianmknoll/rlgf-service/internal/discord"
 )
 
+type ApiMemory struct {
+	GuildId string `json:"guildId"`
+	Memory  string `json:"memory"`
+}
+
 type ApiMessage struct {
-	Author  string `json:"author`
+	Author  string `json:"author"`
 	GuildId string `json:"guildId"`
 	Channel string `json:"channel"`
 	Message string `json:"message"`
@@ -32,6 +37,34 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("/memory", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		var m ApiMemory
+
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&m)
+		if err != nil {
+			http.Error(w, "Bad request: "+err.Error(), http.StatusUnprocessableEntity)
+		}
+		defer r.Body.Close()
+
+		fmt.Printf("Received memory %v\n", m)
+
+		memory := db.DbMemory{
+			Memory: m.Memory,
+		}
+
+		err = database.CreateMemory(m.GuildId, memory.Memory)
+		if err != nil {
+			log.Printf("Failed to create new message: %v\n", err)
+			http.Error(w, "Failed to create new message", http.StatusInternalServerError)
+			return
+		}
+	})
+
 	mux.HandleFunc("/message", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -47,7 +80,7 @@ func main() {
 		}
 		defer r.Body.Close()
 
-		fmt.Printf("Received %v\n", m)
+		fmt.Printf("Received message %v\n", m)
 
 		seconds := m.Epoch / 1000
 		nanos := (m.Epoch % 1000) * int64(time.Millisecond)

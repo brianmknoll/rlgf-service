@@ -34,7 +34,7 @@ func (f *FirestoreDatabase) CreateMessage(guildId, channelId string, message DbM
 func (f *FirestoreDatabase) ReadRecentMessages(guildId, channelId string) ([]DbMessage, error) {
 	ctx := context.Background()
 
-	recent := time.Now().Add(-12 * time.Hour)
+	recent := time.Now().Add(-48 * time.Hour)
 
 	messagesCollection := f.client.
 		Collection("guilds").

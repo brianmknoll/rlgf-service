@@ -13,6 +13,8 @@ type Database interface {
 	CreateEvent(guildId, name string) error
 	CreateMessage(guildId, channelId string, message DbMessage) error
 	ReadRecentMessages(guildId, channelId string) ([]DbMessage, error)
+
+	CreateMemory(guildId, memory string) error
 }
 
 type FirestoreDatabase struct {
