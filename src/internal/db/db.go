@@ -14,6 +14,7 @@ type Database interface {
 	CreateMessage(guildId, channelId string, message DbMessage) error
 	ReadRecentMessages(guildId, channelId string) ([]DbMessage, error)
 
+	ReadMemories(guildId string) (string, error)
 	CreateMemory(guildId, memory string) error
 }
 

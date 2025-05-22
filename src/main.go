@@ -38,29 +38,58 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/memory", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
+		if r.Method == http.MethodPost {
+			var m ApiMemory
+
+			decoder := json.NewDecoder(r.Body)
+			err := decoder.Decode(&m)
+			if err != nil {
+				http.Error(w, "Bad request: "+err.Error(), http.StatusUnprocessableEntity)
+			}
+			defer r.Body.Close()
+
+			fmt.Printf("Received memory %v\n", m)
+
+			memory := db.DbMemory{
+				Memory: m.Memory,
+			}
+
+			err = database.CreateMemory(m.GuildId, memory.Memory)
+			if err != nil {
+				log.Printf("Failed to create new message: %v\n", err)
+				http.Error(w, "Failed to create new message", http.StatusInternalServerError)
+				return
+			}
+		} else if r.Method == http.MethodGet {
+			guildId := r.URL.Query().Get("guild_id")
+			memories, err := database.ReadMemories(guildId)
+			if err != nil {
+				log.Printf("Failed to read memories: %v\n", err)
+				http.Error(w, "Failed to read memories", http.StatusInternalServerError)
+				return
+			}
+			apiMemory := ApiMemory{
+				GuildId: guildId,
+				Memory:  memories,
+			}
+			jsonResponse, err := json.Marshal(apiMemory)
+			if err != nil {
+				log.Printf("Error marshaling memory to JSON: %v", err)
+				http.Error(w, "Failed to generate JSON response", http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			_, err = w.Write(jsonResponse)
+			if err != nil {
+				// If writing the response fails (e.g., client disconnected), log it.
+				// It's often too late to send an HTTP error code here as headers might have been sent.
+				log.Printf("Error writing JSON response to ResponseWriter: %v", err)
+				return
+			}
+			log.Println("Successfully sent JSON response with messages.")
+		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		var m ApiMemory
-
-		decoder := json.NewDecoder(r.Body)
-		err := decoder.Decode(&m)
-		if err != nil {
-			http.Error(w, "Bad request: "+err.Error(), http.StatusUnprocessableEntity)
-		}
-		defer r.Body.Close()
-
-		fmt.Printf("Received memory %v\n", m)
-
-		memory := db.DbMemory{
-			Memory: m.Memory,
-		}
-
-		err = database.CreateMemory(m.GuildId, memory.Memory)
-		if err != nil {
-			log.Printf("Failed to create new message: %v\n", err)
-			http.Error(w, "Failed to create new message", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -123,6 +152,7 @@ func main() {
 			// If writing the response fails (e.g., client disconnected), log it.
 			// It's often too late to send an HTTP error code here as headers might have been sent.
 			log.Printf("Error writing JSON response to ResponseWriter: %v", err)
+			return
 		}
 
 		log.Println("Successfully sent JSON response with messages.")

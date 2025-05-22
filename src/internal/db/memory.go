@@ -11,6 +11,29 @@ type DbMemory struct {
 
 const memoryDocId = "omni-memory"
 
+func (f *FirestoreDatabase) ReadMemories(guildId string) (string, error) {
+	memoryRef := f.client.
+		Collection("guilds").
+		Doc(guildId).
+		Collection("memories").
+		Doc(memoryDocId)
+
+	doc, err := memoryRef.Get(context.Background())
+	if err != nil {
+		return "", err
+	}
+	if !doc.Exists() {
+		return "", nil
+	}
+
+	var mem DbMemory
+	err = doc.DataTo(&mem)
+	if err != nil {
+		return "", err
+	}
+	return mem.Memory, nil
+}
+
 func (f *FirestoreDatabase) CreateMemory(guildId, memory string) error {
 	memoryRef := f.client.
 		Collection("guilds").
