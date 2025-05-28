@@ -79,7 +79,6 @@ func (router *RlgfRouter) getMessages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 
 	_, err = w.Write(jsonResponse)
 	if err != nil {

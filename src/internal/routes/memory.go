@@ -67,7 +67,6 @@ func (router *RlgfRouter) getMemory(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to generate JSON response", http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonResponse)
 	if err != nil {
