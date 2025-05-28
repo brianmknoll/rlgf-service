@@ -6,7 +6,7 @@ import (
 )
 
 type DbMemory struct {
-	Memory string `json:"memory"`
+	Memory string `firestore:"memory"`
 }
 
 const memoryDocId = "omni-memory"
