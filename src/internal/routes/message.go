@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -57,7 +58,11 @@ func (router *RlgfRouter) createMessage(w http.ResponseWriter, r *http.Request) 
 	err = router.database.CreateMessage(m.GuildId, m.Channel, newMsg)
 	if err != nil {
 		log.Printf("Failed to create new message: %v\n", err)
-		http.Error(w, "Failed to create new message", http.StatusInternalServerError)
+		if errors.Is(err, db.ErrAlreadyExists) {
+			http.Error(w, "Message already exists", http.StatusConflict)
+		} else {
+			http.Error(w, "Failed to create new message", http.StatusInternalServerError)
+		}
 		return
 	}
 

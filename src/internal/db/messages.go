@@ -7,6 +7,8 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"google.golang.org/api/iterator"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type DbMessage struct {
@@ -25,6 +27,9 @@ func (f *FirestoreDatabase) CreateMessage(guildId, channelId string, message DbM
 		Doc(message.Timestamp.Format("2006-01-02T15:04:05.000Z07:00"))
 	wr, err := eventRef.Create(context.Background(), message)
 	if err != nil {
+		if st, _ := status.FromError(err); st.Code() == codes.AlreadyExists {
+			return ErrAlreadyExists
+		}
 		return err
 	}
 	fmt.Println(wr)

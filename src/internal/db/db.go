@@ -2,10 +2,13 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"cloud.google.com/go/firestore"
 )
+
+var ErrAlreadyExists = errors.New("document already exists")
 
 const projectId = "real-life-group-finder"
 
