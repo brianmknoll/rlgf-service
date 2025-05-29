@@ -12,6 +12,7 @@ type Router interface {
 	HandleMessage(w http.ResponseWriter, r *http.Request)
 	HandleMemory(w http.ResponseWriter, r *http.Request)
 	HandleGuild(w http.ResponseWriter, r *http.Request)
+	HandleUser(w http.ResponseWriter, r *http.Request)
 }
 
 type RlgfRouter struct {

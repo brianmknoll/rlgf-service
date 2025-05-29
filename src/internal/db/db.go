@@ -21,6 +21,9 @@ type Database interface {
 	CreateMemory(guildId, memory string) error
 
 	GetGuild(guildId string) (*DbGuild, error)
+
+	ReadUsers(guildId string) ([]DbUser, error)
+	CreateUser(guildId string, user DbUser) error
 }
 
 type FirestoreDatabase struct {

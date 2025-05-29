@@ -19,6 +19,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/events", router.HandleEvent)
+	mux.HandleFunc("/guilds/{guildId}/users", router.HandleUser)
 	mux.HandleFunc("/guilds", router.HandleGuild)
 	mux.HandleFunc("/memory", router.HandleMemory)
 	mux.HandleFunc("/message", router.HandleMessage)
