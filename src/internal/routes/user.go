@@ -31,6 +31,13 @@ func (router *RlgfRouter) HandleUser(w http.ResponseWriter, r *http.Request) {
 func (router *RlgfRouter) createUser(w http.ResponseWriter, r *http.Request) {
 	var user ApiUser
 
+	guildId := r.PathValue("guildId")
+	fmt.Printf("Creating user for guild %s\n", guildId)
+	if guildId == "" {
+		http.Error(w, "Guild ID is required", http.StatusBadRequest)
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&user)
 	if err != nil {
@@ -51,7 +58,8 @@ func (router *RlgfRouter) createUser(w http.ResponseWriter, r *http.Request) {
 		Joined:   time.Unix(seconds, nanos),
 	}
 
-	err = router.database.CreateUser(r.PathValue("guildId"), newUser)
+	err = router.database.CreateUser(guildId, newUser)
+
 	if err != nil {
 		log.Printf("Failed to create new user: %v\n", err)
 		if errors.Is(err, db.ErrAlreadyExists) {
@@ -67,6 +75,12 @@ func (router *RlgfRouter) createUser(w http.ResponseWriter, r *http.Request) {
 
 func (router *RlgfRouter) getUsers(w http.ResponseWriter, r *http.Request) {
 	guildId := r.PathValue("guildId")
+	fmt.Printf("Creating user for guild %s\n", guildId)
+	if guildId == "" {
+		http.Error(w, "Guild ID is required", http.StatusBadRequest)
+		return
+	}
+
 	dbUsers, err := router.database.ReadUsers(guildId)
 	if err != nil {
 		http.Error(w, "Failed to read users", http.StatusInternalServerError)
